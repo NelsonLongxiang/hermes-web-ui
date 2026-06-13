@@ -97,7 +97,9 @@ function envFlagEnabled(name: string): boolean {
 }
 
 function gatewayAutostartDisabled(): boolean {
-  return envFlagEnabled('HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART')
+  const raw = String(process.env.HERMES_WEB_UI_ENABLE_GATEWAY_AUTOSTART || '').trim().toLowerCase()
+  if (['1', 'true', 'yes', 'on'].includes(raw)) return false
+  return true
 }
 
 function skillInjectionDisabled(): boolean {

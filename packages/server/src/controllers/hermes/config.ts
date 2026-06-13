@@ -253,7 +253,8 @@ export async function updateConfig(ctx: any) {
 
     // Platform adapters run through Hermes gateway; restart it so channel
     // config changes (Feishu/Weixin/etc.) are applied.
-    if (restart !== false && PLATFORM_SECTIONS.has(section)) {
+    const enableAutostart = String(process.env.HERMES_WEB_UI_ENABLE_GATEWAY_AUTOSTART || '').trim().toLowerCase()
+    if (restart !== false && PLATFORM_SECTIONS.has(section) && ['1', 'true', 'yes', 'on'].includes(enableAutostart)) {
       try {
         const restartResult = await restartGatewayForProfile(profile)
         logger.info('[config] gateway restarted after config update section=%s profile=%s result=%j', section, profile, restartResult)
@@ -362,14 +363,17 @@ export async function updateCredentials(ctx: any) {
 
     // Platform adapters run through Hermes gateway; restart it so channel
     // credentials are applied.
-    try {
-      const restartResult = await restartGatewayForProfile(profile)
-      logger.info('[config] gateway restarted after credentials update platform=%s profile=%s result=%j', platform, profile, restartResult)
-    } catch (err) {
-      logger.error(err, 'Gateway restart failed')
-      ctx.status = 500
-      ctx.body = { error: err instanceof Error ? err.message : 'Gateway restart failed' }
-      return
+    const enableAutostartCfg = String(process.env.HERMES_WEB_UI_ENABLE_GATEWAY_AUTOSTART || '').trim().toLowerCase()
+    if (['1', 'true', 'yes', 'on'].includes(enableAutostartCfg)) {
+      try {
+        const restartResult = await restartGatewayForProfile(profile)
+        logger.info('[config] gateway restarted after credentials update platform=%s profile=%s result=%j', platform, profile, restartResult)
+      } catch (err) {
+        logger.error(err, 'Gateway restart failed')
+        ctx.status = 500
+        ctx.body = { error: err instanceof Error ? err.message : 'Gateway restart failed' }
+        return
+      }
     }
 
     ctx.body = { success: true }
